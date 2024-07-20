@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 class StorageService {
+    storageName;
     get storagePath() {
         return `storage/${this.storageName}.json`;
     }
@@ -86,7 +87,7 @@ class StorageService {
         const data = await this.readStorageFile();
         const storage = JSON.parse(data);
         return new Promise((resolve, reject) => {
-            fs.writeFile(this.storagePath, JSON.stringify(Object.assign(Object.assign({}, storage), { [key]: value })), (err) => {
+            fs.writeFile(this.storagePath, JSON.stringify({ ...storage, [key]: value }), (err) => {
                 if (err) {
                     reject(err);
                 }

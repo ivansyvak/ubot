@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const openai_1 = __importDefault(require("openai"));
 class OpenAIService {
+    token;
+    static hasInstance = false;
     constructor(token) {
         this.token = token;
         if (OpenAIService.hasInstance) {
@@ -51,7 +53,6 @@ class OpenAIService {
         console.log('Hello, OpenAI!');
     }
 }
-OpenAIService.hasInstance = false;
 const openai_token = (0, fs_1.readFileSync)('tokens/openai_token', 'utf-8').trim();
 exports.default = new OpenAIService(openai_token);
 //# sourceMappingURL=openai.service.js.map

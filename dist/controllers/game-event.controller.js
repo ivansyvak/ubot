@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const storage_service_1 = __importDefault(require("../services/storage.service"));
 class GameEventController {
+    storage;
     constructor() {
         this.storage = new storage_service_1.default('game-events');
     }

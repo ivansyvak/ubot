@@ -13,6 +13,8 @@ const quizChannels = {
     '-1001717726506': { id: 'graj', name: 'ГРАЙ!' }
 };
 class TGBotService {
+    bot;
+    static hasInstance = false;
     constructor(botToken) {
         if (TGBotService.hasInstance) {
             throw new Error('Cannot create multiple instances of TGBotService');
@@ -102,8 +104,7 @@ class TGBotService {
         }
     }
     validateQuizChannelMessage(msg) {
-        var _a;
-        const orgId = (_a = msg.forward_from_chat) === null || _a === void 0 ? void 0 : _a.id;
+        const orgId = msg.forward_from_chat?.id;
         if (!orgId) {
             throw new Error('No orgId');
         }
@@ -124,8 +125,7 @@ class TGBotService {
         return text;
     }
     async handleQuizChannelMessage(msg) {
-        var _a;
-        const orgId = ((_a = msg.forward_from_chat) === null || _a === void 0 ? void 0 : _a.id) || '';
+        const orgId = msg.forward_from_chat?.id || '';
         const text = this.validateQuizChannelMessage(msg);
         const res = await openai_service_1.default.quizAnouncementToGameEvent(text);
         if (!res) {
@@ -180,7 +180,6 @@ class TGBotService {
         ];
     }
 }
-TGBotService.hasInstance = false;
 const tg_bot_token = (0, fs_1.readFileSync)('tokens/tg_bot_token', 'utf-8');
 exports.default = new TGBotService(tg_bot_token);
 //# sourceMappingURL=tg-bot.service.js.map
