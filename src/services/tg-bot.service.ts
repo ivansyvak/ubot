@@ -55,14 +55,8 @@ class TGBotService {
         break;
       }
 
-      case 'chinazes': {
-        this.bot.answerCallbackQuery(query.id, {
-          callback_query_id: query.id
-        });
-
-        if (query.message) {
-          this.bot.sendMessage(query.message.chat.id, 'Хуйня, нєту чіназес 😢😢😢');
-        }
+      case 'chinazes': {        
+        this.chinazesCallback(query);
         break;
       }
 
@@ -113,6 +107,19 @@ class TGBotService {
 
     if (query.message) {
       this.bot.sendMessage(query.message.chat.id, joke || 'Жартів нєту 😢😢😢');
+    }
+  }
+
+  private async chinazesCallback(query: TelegramBot.CallbackQuery) {
+    this.bot.answerCallbackQuery(query.id, {
+      callback_query_id: query.id
+    });
+
+    const text = await openaiService.generateCompletion(
+      `Ти експерт в молодіжному сленгу, і ти любиш жартівливо пояснювати значення слів.`, `Поясни в жартівливій формі що таке чіназес і як використовується це слово.`);
+
+    if (query.message && text) {
+      this.bot.sendMessage(query.message.chat.id, text);
     }
   }
 

@@ -14,7 +14,7 @@ class OpenAIService {
     OpenAIService.hasInstance = true;
   }
 
-  private async generateCompletion(systemPrompt: string, userPrompt: string) {
+  public async generateCompletion(systemPrompt: string, userPrompt: string) {
     const openai = new OpenAI({ apiKey: this.token });
 
     const chatCompletion: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create({
@@ -48,10 +48,10 @@ class OpenAIService {
 
   public async generateJoke() {
     const systemPrompt = `
-      Ти стендап комік, який шутіт в стілє "А знаєте як називається..." відповідь має бути з наступного рядку.
+      Ти комік який жартує в стилі Dad Jokes.
     `;
 
-    const userPrompt = 'Придумай шутку в стилі Dad Jokes.';
+    const userPrompt = 'Придумай коротенький жарт';
 
     return this.generateCompletion(systemPrompt, userPrompt);
   }
