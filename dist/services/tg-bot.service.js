@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,8 +22,6 @@ const quizChannels = {
     '-1001717726506': { id: 'graj', name: 'ГРАЙ!' }
 };
 class TGBotService {
-    bot;
-    static hasInstance = false;
     constructor(botToken) {
         if (TGBotService.hasInstance) {
             throw new Error('Cannot create multiple instances of TGBotService');
@@ -33,64 +40,72 @@ class TGBotService {
             }
         });
     }
-    async onCallbackQuery(query) {
-        switch (query.data) {
-            case 'upcoming_game_events': {
-                this.upcomingGameEventsCallback(query);
-                break;
+    onCallbackQuery(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            switch (query.data) {
+                case 'upcoming_game_events': {
+                    this.upcomingGameEventsCallback(query);
+                    break;
+                }
+                case 'standup': {
+                    this.standupCallback(query);
+                    break;
+                }
+                case 'chinazes': {
+                    this.chinazesCallback(query);
+                    break;
+                }
             }
-            case 'standup': {
-                this.standupCallback(query);
-                break;
+        });
+    }
+    upcomingGameEventsCallback(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.bot.answerCallbackQuery(query.id, {
+                callback_query_id: query.id
+            });
+            const gameEvents = yield game_event_controller_1.default.upcomingGameEvents();
+            const gameEventsArray = Object.values(gameEvents);
+            if (!gameEventsArray.length) {
+                query.message && this.bot.sendMessage(query.message.chat.id, 'Квєзочков нєту 😢😢😢');
+                return;
             }
-            case 'chinazes': {
-                this.chinazesCallback(query);
-                break;
+            const options = {};
+            const inline_keyboard = [];
+            for (let gameEvent of gameEventsArray) {
+                const d = (0, moment_1.default)(new Date(gameEvent.date)).format('DD.MM');
+                const text = `${d} ${gameEvent.time}: ${gameEvent.organization} ${gameEvent.topic}`;
+                inline_keyboard.push([{
+                        text,
+                        url: game_event_controller_1.default.getGoogleCalendarLink(gameEvent)
+                    }]);
             }
-        }
-    }
-    async upcomingGameEventsCallback(query) {
-        this.bot.answerCallbackQuery(query.id, {
-            callback_query_id: query.id
+            if (inline_keyboard.length) {
+                options.reply_markup = { inline_keyboard };
+            }
+            query.message && this.bot.sendMessage(query.message.chat.id, 'Добавляй сєбє в калємдарь ', options);
         });
-        const gameEvents = await game_event_controller_1.default.upcomingGameEvents();
-        const gameEventsArray = Object.values(gameEvents);
-        if (!gameEventsArray.length) {
-            query.message && this.bot.sendMessage(query.message.chat.id, 'Квєзочков нєту 😢😢😢');
-            return;
-        }
-        const options = {};
-        const inline_keyboard = [];
-        for (let gameEvent of gameEventsArray) {
-            const d = (0, moment_1.default)(new Date(gameEvent.date)).format('DD.MM');
-            const text = `${d} ${gameEvent.time}: ${gameEvent.organization} ${gameEvent.topic}`;
-            inline_keyboard.push([{
-                    text,
-                    url: game_event_controller_1.default.getGoogleCalendarLink(gameEvent)
-                }]);
-        }
-        if (inline_keyboard.length) {
-            options.reply_markup = { inline_keyboard };
-        }
-        query.message && this.bot.sendMessage(query.message.chat.id, 'Добавляй сєбє в калємдарь ', options);
     }
-    async standupCallback(query) {
-        const joke = await openai_service_1.default.generateJoke();
-        this.bot.answerCallbackQuery(query.id, {
-            callback_query_id: query.id
+    standupCallback(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const joke = yield openai_service_1.default.generateJoke();
+            this.bot.answerCallbackQuery(query.id, {
+                callback_query_id: query.id
+            });
+            if (query.message) {
+                this.bot.sendMessage(query.message.chat.id, joke || 'Жартів нєту 😢😢😢');
+            }
         });
-        if (query.message) {
-            this.bot.sendMessage(query.message.chat.id, joke || 'Жартів нєту 😢😢😢');
-        }
     }
-    async chinazesCallback(query) {
-        this.bot.answerCallbackQuery(query.id, {
-            callback_query_id: query.id
+    chinazesCallback(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.bot.answerCallbackQuery(query.id, {
+                callback_query_id: query.id
+            });
+            const text = yield openai_service_1.default.generateCompletion(`Ти експерт в молодіжному сленгу, і ти любиш жартівливо пояснювати значення слів.`, `Поясни в жартівливій формі що таке чіназес і як використовується це слово.`);
+            if (query.message && text) {
+                this.bot.sendMessage(query.message.chat.id, text);
+            }
         });
-        const text = await openai_service_1.default.generateCompletion(`Ти експерт в молодіжному сленгу, і ти любиш жартівливо пояснювати значення слів.`, `Поясни в жартівливій формі що таке чіназес і як використовується це слово.`);
-        if (query.message && text) {
-            this.bot.sendMessage(query.message.chat.id, text);
-        }
     }
     onMessage(msg) {
         if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
@@ -104,7 +119,8 @@ class TGBotService {
         }
     }
     validateQuizChannelMessage(msg) {
-        const orgId = msg.forward_from_chat?.id;
+        var _a;
+        const orgId = (_a = msg.forward_from_chat) === null || _a === void 0 ? void 0 : _a.id;
         if (!orgId) {
             throw new Error('No orgId');
         }
@@ -124,31 +140,34 @@ class TGBotService {
         }
         return text;
     }
-    async handleQuizChannelMessage(msg) {
-        const orgId = msg.forward_from_chat?.id || '';
-        const text = this.validateQuizChannelMessage(msg);
-        const res = await openai_service_1.default.quizAnouncementToGameEvent(text);
-        if (!res) {
-            return;
-        }
-        let gameEvent = JSON.parse(res);
-        gameEvent.organization = quizChannels[orgId].name;
-        gameEvent.organizationId = quizChannels[orgId].id;
-        game_event_controller_1.default.fixGameEventDate(gameEvent);
-        const existingGameEvent = await game_event_controller_1.default.getGameEvent(game_event_controller_1.default.getKey(gameEvent));
-        if (existingGameEvent) {
-            this.bot.sendMessage(msg.chat.id, 'Іді нахуй, уже добавіл!', { reply_to_message_id: msg.message_id });
-            return;
-        }
-        if (await game_event_controller_1.default.updateGameEvent(gameEvent)) {
-            const options = {
-                reply_to_message_id: msg.message_id,
-                reply_markup: {
-                    inline_keyboard: this.getInlineKeyboardForGameEvent(gameEvent)
-                }
-            };
-            this.bot.sendMessage(msg.chat.id, 'Добавіл в локальний калємдарчік', options);
-        }
+    handleQuizChannelMessage(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const orgId = ((_a = msg.forward_from_chat) === null || _a === void 0 ? void 0 : _a.id) || '';
+            const text = this.validateQuizChannelMessage(msg);
+            const res = yield openai_service_1.default.quizAnouncementToGameEvent(text);
+            if (!res) {
+                return;
+            }
+            let gameEvent = JSON.parse(res);
+            gameEvent.organization = quizChannels[orgId].name;
+            gameEvent.organizationId = quizChannels[orgId].id;
+            game_event_controller_1.default.fixGameEventDate(gameEvent);
+            const existingGameEvent = yield game_event_controller_1.default.getGameEvent(game_event_controller_1.default.getKey(gameEvent));
+            if (existingGameEvent) {
+                this.bot.sendMessage(msg.chat.id, 'Іді нахуй, уже добавіл!', { reply_to_message_id: msg.message_id });
+                return;
+            }
+            if (yield game_event_controller_1.default.updateGameEvent(gameEvent)) {
+                const options = {
+                    reply_to_message_id: msg.message_id,
+                    reply_markup: {
+                        inline_keyboard: this.getInlineKeyboardForGameEvent(gameEvent)
+                    }
+                };
+                this.bot.sendMessage(msg.chat.id, 'Добавіл в локальний калємдарчік', options);
+            }
+        });
     }
     handleQuizPhoto(msg) {
         console.log('Quiz photo');
@@ -180,6 +199,7 @@ class TGBotService {
         ];
     }
 }
+TGBotService.hasInstance = false;
 const tg_bot_token = (0, fs_1.readFileSync)('tokens/tg_bot_token', 'utf-8');
 exports.default = new TGBotService(tg_bot_token);
 //# sourceMappingURL=tg-bot.service.js.map

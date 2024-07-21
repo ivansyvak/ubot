@@ -22,83 +22,103 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 class StorageService {
-    storageName;
     get storagePath() {
         return `storage/${this.storageName}.json`;
     }
     constructor(storageName) {
         this.storageName = storageName;
     }
-    async checkStorageFolder() {
-        return new Promise((resolve, reject) => {
-            fs.access('storage', fs.constants.F_OK, (err) => {
-                if (err) {
-                    fs.mkdir('storage', (err) => {
-                        if (err) {
-                            reject(err);
-                        }
+    checkStorageFolder() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                fs.access('storage', fs.constants.F_OK, (err) => {
+                    if (err) {
+                        fs.mkdir('storage', (err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve();
+                        });
+                    }
+                    else {
                         resolve();
-                    });
-                }
-                else {
-                    resolve();
-                }
+                    }
+                });
             });
         });
     }
-    async checkStorageFile() {
-        await this.checkStorageFolder();
-        return new Promise((resolve, reject) => {
-            fs.access(this.storagePath, fs.constants.F_OK, (err) => {
-                if (err) {
-                    fs.writeFile(this.storagePath, '{}', (err) => {
-                        if (err) {
-                            reject(err);
-                        }
+    checkStorageFile() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.checkStorageFolder();
+            return new Promise((resolve, reject) => {
+                fs.access(this.storagePath, fs.constants.F_OK, (err) => {
+                    if (err) {
+                        fs.writeFile(this.storagePath, '{}', (err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve();
+                        });
+                    }
+                    else {
                         resolve();
-                    });
-                }
-                else {
-                    resolve();
-                }
+                    }
+                });
             });
         });
     }
-    async readStorageFile() {
-        await this.checkStorageFile();
-        return new Promise((resolve, reject) => {
-            fs.readFile(this.storagePath, 'utf-8', (err, data) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(data.trim());
+    readStorageFile() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.checkStorageFile();
+            return new Promise((resolve, reject) => {
+                fs.readFile(this.storagePath, 'utf-8', (err, data) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    resolve(data.trim());
+                });
             });
         });
     }
-    async get(key) {
-        const data = await this.readStorageFile();
-        const storage = JSON.parse(data);
-        return storage[key];
+    get(key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.readStorageFile();
+            const storage = JSON.parse(data);
+            return storage[key];
+        });
     }
-    async set(key, value) {
-        const data = await this.readStorageFile();
-        const storage = JSON.parse(data);
-        return new Promise((resolve, reject) => {
-            fs.writeFile(this.storagePath, JSON.stringify({ ...storage, [key]: value }), (err) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(true);
+    set(key, value) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.readStorageFile();
+            const storage = JSON.parse(data);
+            return new Promise((resolve, reject) => {
+                fs.writeFile(this.storagePath, JSON.stringify(Object.assign(Object.assign({}, storage), { [key]: value })), (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    resolve(true);
+                });
             });
         });
     }
-    async list() {
-        const data = await this.readStorageFile();
-        const storage = JSON.parse(data);
-        return storage;
+    list() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.readStorageFile();
+            const storage = JSON.parse(data);
+            return storage;
+        });
     }
 }
 exports.default = StorageService;
