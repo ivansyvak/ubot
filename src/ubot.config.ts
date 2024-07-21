@@ -4,6 +4,7 @@ class UBotConfig {
   isProduction = false;
   tgBotToken = '';
   openaiToken = '';
+  ocrToken = '';
 
   constructor() {
     this.isProduction = process.env.NODE_ENV === 'production';
@@ -11,9 +12,11 @@ class UBotConfig {
     if (this.isProduction) {
       this.openaiToken = readFileSync('/opt/ubot/tokens/openai_token', 'utf-8');
       this.tgBotToken = readFileSync('/opt/ubot/tokens/tg_bot_token', 'utf-8');
+      this.ocrToken = readFileSync('/opt/ubot/tokens/ocr_token', 'utf-8');
     } else {
       this.openaiToken = readFileSync('tokens/openai_token', 'utf-8');
       this.tgBotToken = readFileSync('tokens/tg_bot_token', 'utf-8');
+      this.ocrToken = readFileSync('tokens/ocr_token', 'utf-8');
     }
   }
 }

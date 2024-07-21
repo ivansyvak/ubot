@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,11 +35,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs = __importStar(require("fs"));
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const openai_service_1 = __importDefault(require("./openai.service"));
 const game_event_controller_1 = __importDefault(require("../controllers/game-event.controller"));
 const moment_1 = __importDefault(require("moment"));
 const ubot_config_1 = __importDefault(require("../ubot.config"));
+const axios_1 = __importDefault(require("axios"));
+const mime = __importStar(require("mime-types"));
+const path = __importStar(require("path"));
+const fs_service_1 = __importDefault(require("./fs.service"));
+const form_data_1 = __importDefault(require("form-data"));
 const quizChannels = {
     '-1001344826818': { id: 'art42', name: '42' },
     '-1001717726506': { id: 'graj', name: 'ГРАЙ!' }
@@ -170,7 +199,64 @@ class TGBotService {
         });
     }
     handleQuizPhoto(msg) {
-        console.log('Quiz photo');
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!msg.photo) {
+                this.bot.sendMessage(msg.chat.id, 'Фотка нєту 😢😢😢', { reply_to_message_id: msg.message_id });
+                return;
+            }
+            const maxFileSize = 1048576;
+            let pSize = msg.photo[msg.photo.length - 1];
+            if (pSize.file_size && pSize.file_size > maxFileSize) {
+                [...msg.photo].reverse().find((photo) => {
+                    if (photo.file_size && photo.file_size <= maxFileSize) {
+                        pSize = photo;
+                        return true;
+                    }
+                });
+            }
+            const fileLink = yield this.bot.getFileLink(pSize.file_id);
+            const imageResponse = yield axios_1.default.get(fileLink, { responseType: 'arraybuffer' });
+            const fileExtension = fileLink.split('.').pop() || 'jpg';
+            const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+            if (imageBuffer.length > maxFileSize) {
+                this.bot.sendMessage(msg.chat.id, 'Розмєр фоткі слішкам бальшой 😢😢😢. Треба не больше 1 Мб', { reply_to_message_id: msg.message_id });
+                return;
+            }
+            const imagePath = path.join(`storage/temp_image.${fileExtension}`);
+            yield fs_service_1.default.writeFile(imagePath, imageBuffer);
+            const ocrBaseURL = `https://api.ocr.space/parse/image`;
+            const form = new form_data_1.default();
+            form.append('apikey', ubot_config_1.default.ocrToken);
+            form.append('language', 'rus');
+            form.append('file', fs.createReadStream(imagePath));
+            try {
+                const ocrResponse = yield axios_1.default.post(ocrBaseURL, form, {
+                    headers: form.getHeaders()
+                });
+                const ocrData = ocrResponse.data;
+                if (ocrData && ocrData.ParsedResults && ocrData.ParsedResults.length) {
+                    const res = yield openai_service_1.default.quizAnouncementToGameEvent(ocrData.ParsedResults[0].ParsedText);
+                    if (!res) {
+                        this.bot.sendMessage(msg.chat.id, 'Пока шо тут всьо сложно.', { reply_to_message_id: msg.message_id });
+                        return;
+                    }
+                    let gameEvent = JSON.parse(res);
+                    game_event_controller_1.default.fixGameEventDate(gameEvent);
+                    this.bot.sendMessage(msg.chat.id, res || "Пока шо тут всьо сложно.\n" + JSON.stringify(gameEvent), { reply_to_message_id: msg.message_id });
+                }
+            }
+            catch (e) {
+                console.error(e);
+                this.bot.sendMessage(msg.chat.id, 'Шось пішло не так 😢😢😢', { reply_to_message_id: msg.message_id });
+            }
+        });
+    }
+    updateGameEvent(text, msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+        });
+    }
+    getFileExtension(mimeType) {
+        return mime.extension(mimeType) || 'jpg';
     }
     init() {
         console.log('Драсті, с празнічком!');

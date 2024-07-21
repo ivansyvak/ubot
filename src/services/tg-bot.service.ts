@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import * as fs from 'fs';
 
 import TelegramBot from "node-telegram-bot-api";
 import openaiService from './openai.service';
@@ -8,6 +8,12 @@ import gameEventController from '../controllers/game-event.controller';
 import moment from 'moment';
 import { Organization } from '../models/organization';
 import ubotConfig from '../ubot.config';
+import axios from 'axios';
+import * as mime from 'mime-types';
+import * as path from 'path';
+import fsService from './fs.service';
+
+import FormData from 'form-data';
 
 const quizChannels: { [key: string]: Organization } = {
   '-1001344826818': { id: 'art42', name: '42' },
@@ -56,7 +62,7 @@ class TGBotService {
         break;
       }
 
-      case 'chinazes': {        
+      case 'chinazes': {
         this.chinazesCallback(query);
         break;
       }
@@ -74,7 +80,7 @@ class TGBotService {
 
     if (!gameEventsArray.length) {
       query.message && this.bot.sendMessage(query.message.chat.id, 'Квєзочков нєту 😢😢😢');
-      
+
       return;
     }
 
@@ -137,7 +143,6 @@ class TGBotService {
     }
   }
 
-
   private validateQuizChannelMessage(msg: TelegramBot.Message) {
     const orgId = msg.forward_from_chat?.id;
     if (!orgId) {
@@ -199,8 +204,77 @@ class TGBotService {
     }
   }
 
-  private handleQuizPhoto(msg: TelegramBot.Message) {
-    console.log('Quiz photo');
+  private async handleQuizPhoto(msg: TelegramBot.Message) {
+    if (!msg.photo) {
+      this.bot.sendMessage(msg.chat.id, 'Фотка нєту 😢😢😢', { reply_to_message_id: msg.message_id });
+      return;
+    }
+
+    const maxFileSize = 1048576;
+
+    let pSize = msg.photo[msg.photo.length - 1];
+    if (pSize.file_size && pSize.file_size > maxFileSize) {
+      [...msg.photo].reverse().find((photo) => {
+        if (photo.file_size && photo.file_size <= maxFileSize) {
+          pSize = photo;
+          return true;
+        }
+      });
+    }
+
+    const fileLink = await this.bot.getFileLink(pSize.file_id);
+    const imageResponse = await axios.get(fileLink, { responseType: 'arraybuffer' });
+    const fileExtension = fileLink.split('.').pop() || 'jpg';
+    const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+
+    if (imageBuffer.length > maxFileSize) {
+      this.bot.sendMessage(
+        msg.chat.id, 'Розмєр фоткі слішкам бальшой 😢😢😢. Треба не больше 1 Мб', { reply_to_message_id: msg.message_id });
+      return;
+    }
+
+    const imagePath = path.join(`storage/temp_image.${fileExtension}`);
+    await fsService.writeFile(imagePath, imageBuffer);
+
+    const ocrBaseURL = `https://api.ocr.space/parse/image`;
+
+    const form = new FormData();
+    form.append('apikey', ubotConfig.ocrToken);
+    form.append('language', 'rus');
+    form.append('file', fs.createReadStream(imagePath));
+
+    try {
+      const ocrResponse = await axios.post(ocrBaseURL, form, {
+        headers: form.getHeaders()
+      });
+
+      const ocrData = ocrResponse.data;
+      if (ocrData && ocrData.ParsedResults && ocrData.ParsedResults.length) {
+        const res = await openaiService.quizAnouncementToGameEvent(ocrData.ParsedResults[0].ParsedText);
+        if (!res) {
+          this.bot.sendMessage(msg.chat.id, 'Пока шо тут всьо сложно.', { reply_to_message_id: msg.message_id });
+          return;
+        }
+
+        let gameEvent: GameEvent = JSON.parse(res);
+        gameEventController.fixGameEventDate(gameEvent);
+
+        this.bot.sendMessage(msg.chat.id, res || "Пока шо тут всьо сложно.\n" + JSON.stringify(gameEvent), { reply_to_message_id: msg.message_id });
+      }
+
+    } catch (e) {
+      console.error(e);
+      this.bot.sendMessage(msg.chat.id, 'Шось пішло не так 😢😢😢', { reply_to_message_id: msg.message_id });
+    }
+
+  }
+
+  private async updateGameEvent(text: string, msg: TelegramBot.Message) {
+
+  }
+
+  private getFileExtension(mimeType: string): string {
+    return mime.extension(mimeType) || 'jpg';
   }
 
   public init() {

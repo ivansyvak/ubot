@@ -6,14 +6,17 @@ class UBotConfig {
         this.isProduction = false;
         this.tgBotToken = '';
         this.openaiToken = '';
+        this.ocrToken = '';
         this.isProduction = process.env.NODE_ENV === 'production';
         if (this.isProduction) {
             this.openaiToken = (0, fs_1.readFileSync)('/opt/ubot/tokens/openai_token', 'utf-8');
             this.tgBotToken = (0, fs_1.readFileSync)('/opt/ubot/tokens/tg_bot_token', 'utf-8');
+            this.ocrToken = (0, fs_1.readFileSync)('/opt/ubot/tokens/ocr_token', 'utf-8');
         }
         else {
             this.openaiToken = (0, fs_1.readFileSync)('tokens/openai_token', 'utf-8');
             this.tgBotToken = (0, fs_1.readFileSync)('tokens/tg_bot_token', 'utf-8');
+            this.ocrToken = (0, fs_1.readFileSync)('tokens/ocr_token', 'utf-8');
         }
     }
 }
