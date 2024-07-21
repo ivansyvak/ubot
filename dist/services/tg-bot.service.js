@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = require("fs");
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const openai_service_1 = __importDefault(require("./openai.service"));
 const game_event_controller_1 = __importDefault(require("../controllers/game-event.controller"));
 const moment_1 = __importDefault(require("moment"));
+const ubot_config_1 = __importDefault(require("../ubot.config"));
 const quizChannels = {
     '-1001344826818': { id: 'art42', name: '42' },
     '-1001717726506': { id: 'graj', name: 'ГРАЙ!' }
@@ -200,6 +200,5 @@ class TGBotService {
     }
 }
 TGBotService.hasInstance = false;
-const tg_bot_token = (0, fs_1.readFileSync)('tokens/tg_bot_token', 'utf-8');
-exports.default = new TGBotService(tg_bot_token);
+exports.default = new TGBotService(ubot_config_1.default.tgBotToken);
 //# sourceMappingURL=tg-bot.service.js.map

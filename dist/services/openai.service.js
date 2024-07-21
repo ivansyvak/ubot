@@ -12,8 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = require("fs");
 const openai_1 = __importDefault(require("openai"));
+const ubot_config_1 = __importDefault(require("../ubot.config"));
 class OpenAIService {
     constructor(token) {
         this.token = token;
@@ -67,6 +67,5 @@ class OpenAIService {
     }
 }
 OpenAIService.hasInstance = false;
-const openai_token = (0, fs_1.readFileSync)('tokens/openai_token', 'utf-8').trim();
-exports.default = new OpenAIService(openai_token);
+exports.default = new OpenAIService(ubot_config_1.default.openaiToken);
 //# sourceMappingURL=openai.service.js.map

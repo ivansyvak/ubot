@@ -7,6 +7,7 @@ import { GameEvent } from '../models/game-event';
 import gameEventController from '../controllers/game-event.controller';
 import moment from 'moment';
 import { Organization } from '../models/organization';
+import ubotConfig from '../ubot.config';
 
 const quizChannels: { [key: string]: Organization } = {
   '-1001344826818': { id: 'art42', name: '42' },
@@ -233,7 +234,4 @@ class TGBotService {
 
 }
 
-
-const tg_bot_token = readFileSync('tokens/tg_bot_token', 'utf-8');
-
-export default new TGBotService(tg_bot_token);
+export default new TGBotService(ubotConfig.tgBotToken);

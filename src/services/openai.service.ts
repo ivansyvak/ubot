@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 
 import OpenAI from 'openai';
+import ubotConfig from '../ubot.config';
 
 class OpenAIService {
   private static hasInstance = false;
@@ -61,6 +62,4 @@ class OpenAIService {
   }
 }
 
-const openai_token = readFileSync('tokens/openai_token', 'utf-8').trim();
-
-export default new OpenAIService(openai_token);
+export default new OpenAIService(ubotConfig.openaiToken);
