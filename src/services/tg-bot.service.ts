@@ -89,7 +89,7 @@ class TGBotService {
 
     for (let gameEvent of gameEventsArray) {
       const d = moment(new Date(gameEvent.date)).format('DD.MM');
-      const text = `${d} ${gameEvent.time}: ${gameEvent.organization} ${gameEvent.topic}`;
+      const text = `[${d} ${gameEvent.time}] ${gameEvent.organization} ${gameEvent.topic}`;
 
       inline_keyboard.push([{
         text,

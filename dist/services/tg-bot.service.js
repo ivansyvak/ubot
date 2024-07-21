@@ -102,7 +102,7 @@ class TGBotService {
             const inline_keyboard = [];
             for (let gameEvent of gameEventsArray) {
                 const d = (0, moment_1.default)(new Date(gameEvent.date)).format('DD.MM');
-                const text = `${d} ${gameEvent.time}: ${gameEvent.organization} ${gameEvent.topic}`;
+                const text = `[${d} ${gameEvent.time}] ${gameEvent.organization} ${gameEvent.topic}`;
                 inline_keyboard.push([{
                         text,
                         url: game_event_controller_1.default.getGoogleCalendarLink(gameEvent)

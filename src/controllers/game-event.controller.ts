@@ -38,12 +38,16 @@ class GameEventController {
   public async upcomingGameEvents() {
     const gameEvents = await this.listGameEvents();
 
-    return Object.values(gameEvents).filter((gameEvent) => {
-      const eventDate = new Date(gameEvent.date + 'T' + gameEvent.time);
-      const now = new Date();
+    return Object.values(gameEvents)
+      .filter((gameEvent) => {
+        const eventDate = new Date(gameEvent.date + 'T' + gameEvent.time);
+        const now = new Date();
 
-      return eventDate > now;
-    });
+        return eventDate > now;
+      })
+      .sort((a, b) => {
+        return (a.date + a.time) > (b.date + b.time) ? 1 : -1;
+      });
   }
 
   public getGoogleCalendarLink(gameEvent: GameEvent) {

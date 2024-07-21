@@ -43,10 +43,14 @@ class GameEventController {
     upcomingGameEvents() {
         return __awaiter(this, void 0, void 0, function* () {
             const gameEvents = yield this.listGameEvents();
-            return Object.values(gameEvents).filter((gameEvent) => {
+            return Object.values(gameEvents)
+                .filter((gameEvent) => {
                 const eventDate = new Date(gameEvent.date + 'T' + gameEvent.time);
                 const now = new Date();
                 return eventDate > now;
+            })
+                .sort((a, b) => {
+                return (a.date + a.time) > (b.date + b.time) ? 1 : -1;
             });
         });
     }
