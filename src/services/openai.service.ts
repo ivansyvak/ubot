@@ -49,7 +49,7 @@ class OpenAIService {
 
   public async generateJoke() {
     const systemPrompt = `
-      Ти комік який жартує в стилі Dad Jokes.
+      Ти комік який жартує в стилі чорного гумору.
     `;
 
     const userPrompt = 'Придумай коротенький жарт';

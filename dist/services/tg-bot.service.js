@@ -130,7 +130,7 @@ class TGBotService {
             this.bot.answerCallbackQuery(query.id, {
                 callback_query_id: query.id
             });
-            const text = yield openai_service_1.default.generateCompletion(`Ти експерт в молодіжному сленгу, і ти любиш жартівливо пояснювати значення слів.`, `Поясни в жартівливій формі що таке чіназес і як використовується це слово.`);
+            const text = yield openai_service_1.default.generateCompletion(`Ти експерт в сленгу`, `Поясни в жартівливій формі що таке чіназес і як використовується це слово.`);
             if (query.message && text) {
                 this.bot.sendMessage(query.message.chat.id, text);
             }
@@ -265,12 +265,14 @@ class TGBotService {
         return [
             [
                 {
-                    text: '🗓️ Бліжайшиє квєзочкі',
-                    callback_data: 'upcoming_game_events'
-                },
-                {
                     text: '📅 Добавіть в гугл калємдарь',
                     url: game_event_controller_1.default.getGoogleCalendarLink(gameEvent)
+                }
+            ],
+            [
+                {
+                    text: '🗓️ Бліжайшиє квєзочкі',
+                    callback_data: 'upcoming_game_events'
                 }
             ]
         ];

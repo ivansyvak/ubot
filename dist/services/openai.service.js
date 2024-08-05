@@ -56,7 +56,7 @@ class OpenAIService {
     generateJoke() {
         return __awaiter(this, void 0, void 0, function* () {
             const systemPrompt = `
-      Ти комік який жартує в стилі Dad Jokes.
+      Ти комік який жартує в стилі чорного гумору.
     `;
             const userPrompt = 'Придумай коротенький жарт';
             return this.generateCompletion(systemPrompt, userPrompt);
