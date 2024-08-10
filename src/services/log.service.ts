@@ -5,6 +5,9 @@ class LogService {
 
   error(message: string, error?: any) {
     console.error(message);
+    if (error) {
+      console.error(error);
+    }
   }
 }
 

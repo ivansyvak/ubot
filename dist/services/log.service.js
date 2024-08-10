@@ -6,6 +6,9 @@ class LogService {
     }
     error(message, error) {
         console.error(message);
+        if (error) {
+            console.error(error);
+        }
     }
 }
 exports.default = new LogService();

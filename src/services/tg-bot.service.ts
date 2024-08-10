@@ -17,7 +17,8 @@ import FormData from 'form-data';
 
 const quizChannels: { [key: string]: Organization } = {
   '-1001344826818': { id: 'art42', name: '42' },
-  '-1001717726506': { id: 'graj', name: 'ГРАЙ!' }
+  '-1001717726506': { id: 'graj', name: 'ГРАЙ!' },
+  '-1002249805451': { id: 'guzya', name: 'GUZYA QUIZ' }
 };
 
 class TGBotService {
@@ -131,9 +132,13 @@ class TGBotService {
   }
 
   private onMessage(msg: TelegramBot.Message) {
-    if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
-      this.handleQuizChannelMessage(msg);
-      return;
+    try {
+      if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
+        this.handleQuizChannelMessage(msg);
+        return;
+      }
+    } catch (e) {
+      logService.error('Error in onMessage', e);
     }
   }
 
@@ -157,7 +162,8 @@ class TGBotService {
         break;
       }
 
-      case 'graj': {
+      case 'graj':
+      case 'guzya': {
         text = msg.caption || '';
         break;
       }
@@ -293,7 +299,7 @@ class TGBotService {
         {
           text: '🗓️ Бліжайшиє квєзочкі',
           callback_data: 'upcoming_game_events'
-        }        
+        }
       ]
     ];
   }

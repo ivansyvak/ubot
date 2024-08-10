@@ -38,6 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const openai_service_1 = __importDefault(require("./openai.service"));
+const log_service_1 = __importDefault(require("./log.service"));
 const game_event_controller_1 = __importDefault(require("../controllers/game-event.controller"));
 const moment_1 = __importDefault(require("moment"));
 const ubot_config_1 = __importDefault(require("../ubot.config"));
@@ -48,7 +49,8 @@ const fs_service_1 = __importDefault(require("./fs.service"));
 const form_data_1 = __importDefault(require("form-data"));
 const quizChannels = {
     '-1001344826818': { id: 'art42', name: '42' },
-    '-1001717726506': { id: 'graj', name: 'ГРАЙ!' }
+    '-1001717726506': { id: 'graj', name: 'ГРАЙ!' },
+    '-1002249805451': { id: 'guzya', name: 'GUZYA QUIZ' }
 };
 class TGBotService {
     constructor(botToken) {
@@ -137,9 +139,14 @@ class TGBotService {
         });
     }
     onMessage(msg) {
-        if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
-            this.handleQuizChannelMessage(msg);
-            return;
+        try {
+            if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
+                this.handleQuizChannelMessage(msg);
+                return;
+            }
+        }
+        catch (e) {
+            log_service_1.default.error('Error in onMessage', e);
         }
     }
     onPhoto(msg) {
@@ -159,7 +166,8 @@ class TGBotService {
                 text = msg.text || '';
                 break;
             }
-            case 'graj': {
+            case 'graj':
+            case 'guzya': {
                 text = msg.caption || '';
                 break;
             }
