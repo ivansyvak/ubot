@@ -52,6 +52,7 @@ const quizChannels = {
     '-1001717726506': { id: 'graj', name: 'ГРАЙ!' },
     '-1002249805451': { id: 'guzya', name: 'GUZYA QUIZ' }
 };
+const mainChannel = '-1001672460536';
 class TGBotService {
     constructor(botToken) {
         if (TGBotService.hasInstance) {
@@ -139,6 +140,7 @@ class TGBotService {
         });
     }
     onMessage(msg) {
+        console.log(msg.chat.id);
         try {
             if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
                 this.handleQuizChannelMessage(msg);
@@ -267,7 +269,18 @@ class TGBotService {
         return mime.extension(mimeType) || 'jpg';
     }
     init() {
-        console.log('Драсті, с празнічком!');
+        return __awaiter(this, void 0, void 0, function* () {
+            this.bot.sendMessage(mainChannel, 'Я обновілся і пєрєзапустілся! Слава Україні! 🇺🇦');
+            setInterval(() => __awaiter(this, void 0, void 0, function* () {
+                const upcoming = yield game_event_controller_1.default.upcomingGameEvents();
+                const now = (0, moment_1.default)().format('YYYY-MM-DD');
+                for (let row of upcoming) {
+                    if (row.date == now) {
+                        this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);
+                    }
+                }
+            }), 1000 * 60 * 60);
+        });
     }
     getInlineKeyboardForGameEvent(gameEvent) {
         return [

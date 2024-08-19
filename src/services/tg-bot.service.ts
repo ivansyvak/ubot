@@ -21,6 +21,8 @@ const quizChannels: { [key: string]: Organization } = {
   '-1002249805451': { id: 'guzya', name: 'GUZYA QUIZ' }
 };
 
+const mainChannel = '-1001672460536';
+
 class TGBotService {
   private bot: TelegramBot;
 
@@ -132,6 +134,9 @@ class TGBotService {
   }
 
   private onMessage(msg: TelegramBot.Message) {
+
+    console.log(msg.chat.id);
+
     try {
       if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
         this.handleQuizChannelMessage(msg);
@@ -283,8 +288,19 @@ class TGBotService {
     return mime.extension(mimeType) || 'jpg';
   }
 
-  public init() {
-    console.log('Драсті, с празнічком!');
+  public async init() {
+    this.bot.sendMessage(mainChannel, 'Я обновілся і пєрєзапустілся! Слава Україні! 🇺🇦');    
+
+    setInterval(async () => {
+      const upcoming = await gameEventController.upcomingGameEvents();
+      const now = moment().format('YYYY-MM-DD');      
+
+      for (let row of upcoming) {        
+        if (row.date == now) {
+          this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);          
+        }
+      }
+    }, 1000 * 60 * 60);
   }
 
   private getInlineKeyboardForGameEvent(gameEvent: GameEvent): TelegramBot.InlineKeyboardButton[][] {
