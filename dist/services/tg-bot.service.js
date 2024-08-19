@@ -185,10 +185,13 @@ class TGBotService {
     handleMention(msg) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const msgHistory = yield this.msgStorage.list();
             const usrMessage = (_a = msg.text) === null || _a === void 0 ? void 0 : _a.replace('@bookwa_bot', '').trim();
+            let msgHistory = (yield this.msgStorage.list()) || [];
             if (usrMessage == '') {
                 return;
+            }
+            if (!Array.isArray(msgHistory)) {
+                msgHistory = Object.values(msgHistory);
             }
             this.bot.sendMessage(msg.chat.id, 'Дайтє подумать', { reply_to_message_id: msg.message_id });
             this.bot.sendSticker(msg.chat.id, 'CAACAgIAAxkBAAICMWbDwa-xucSAEW_dS77xqLqLDPc_AALEMgACS_2JSN0h_UUCCS2eNQQ');

@@ -188,11 +188,16 @@ class TGBotService {
   }
 
   private async handleMention(msg: TelegramBot.Message) {
-    const msgHistory = await this.msgStorage.list() as ChatMessage[] | [];
     const usrMessage = msg.text?.replace('@bookwa_bot', '').trim();
+
+    let msgHistory = await this.msgStorage.list() as ChatMessage[] || [];
 
     if (usrMessage == '') {
       return;
+    }
+
+    if (!Array.isArray(msgHistory)) {
+      msgHistory = Object.values(msgHistory);
     }
 
     this.bot.sendMessage(msg.chat.id, 'Дайтє подумать', {reply_to_message_id: msg.message_id});
