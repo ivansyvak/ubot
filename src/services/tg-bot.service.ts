@@ -14,6 +14,8 @@ import * as path from 'path';
 import fsService from './fs.service';
 
 import FormData from 'form-data';
+import { ChatMessage } from '../models/chat-message';
+import StorageService from './storage.service';
 
 const quizChannels: { [key: string]: Organization } = {
   '-1001344826818': { id: 'art42', name: '42' },
@@ -28,10 +30,14 @@ class TGBotService {
 
   private static hasInstance = false;
 
+  private msgStorage: StorageService<ChatMessage>;
+
   constructor(botToken: string) {
     if (TGBotService.hasInstance) {
       throw new Error('Cannot create multiple instances of TGBotService');
     }
+
+    this.msgStorage = new StorageService('chat-messages');
 
     TGBotService.hasInstance = true;
 
@@ -43,6 +49,34 @@ class TGBotService {
     this.bot.on('photo', this.onPhoto.bind(this));
     this.bot.on('message', this.onMessage.bind(this));
 
+  }
+
+  public async init() {
+    // this.bot.sendMessage(mainChannel, 'Я обновілся і пєрєзапустілся! Слава Україні! 🇺🇦');    
+
+    setInterval(async () => {
+      const upcoming = await gameEventController.upcomingGameEvents();
+      const now = moment().format('YYYY-MM-DD');      
+
+      for (let row of upcoming) {       
+        if (row.kresNotified) {
+          continue;
+        }
+
+        const currentTime = moment().format('HH:mm');
+
+        if (currentTime < '11:00') {
+          continue;
+        }
+        
+        if (row.date == now) {
+          row.kresNotified = true;
+          await gameEventController.updateGameEvent(row);
+
+          this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);          
+        }
+      }
+    }, 1000 * 60 * 60);
   }
 
   private onMenu(msg: TelegramBot.Message) {
@@ -134,10 +168,16 @@ class TGBotService {
   }
 
   private onMessage(msg: TelegramBot.Message) {
-
-    console.log(msg.chat.id);
-
     try {
+      if (msg.text && msg.text.includes('@bookwa_bot ')) {
+        this.handleMention(msg);
+        return;
+      }
+
+      if (msg.chat.id.toString() == mainChannel) {
+        this.updateMessageHistory(msg);
+      }
+
       if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
         this.handleQuizChannelMessage(msg);
         return;
@@ -145,6 +185,22 @@ class TGBotService {
     } catch (e) {
       logService.error('Error in onMessage', e);
     }
+  }
+
+  private async handleMention(msg: TelegramBot.Message) {
+    const msgHistory = await this.msgStorage.list() as ChatMessage[];
+    const usrMessage = msg.text?.replace('@bookwa_bot', '').trim();
+
+    if (usrMessage == '') {
+      return;
+    }
+
+    this.bot.sendMessage(msg.chat.id, 'Дайтє подумать', {reply_to_message_id: msg.message_id});
+    this.bot.sendSticker(msg.chat.id, 'CAACAgIAAxkBAAICMWbDwa-xucSAEW_dS77xqLqLDPc_AALEMgACS_2JSN0h_UUCCS2eNQQ');
+
+    const mentionResponse = await openaiService.generateChatCompletion(msgHistory, usrMessage || '');
+
+    this.bot.sendMessage(msg.chat.id, mentionResponse as string, {reply_to_message_id: msg.message_id});
   }
 
   private onPhoto(msg: TelegramBot.Message) {
@@ -288,34 +344,6 @@ class TGBotService {
     return mime.extension(mimeType) || 'jpg';
   }
 
-  public async init() {
-    this.bot.sendMessage(mainChannel, 'Я обновілся і пєрєзапустілся! Слава Україні! 🇺🇦');    
-
-    setInterval(async () => {
-      const upcoming = await gameEventController.upcomingGameEvents();
-      const now = moment().format('YYYY-MM-DD');      
-
-      for (let row of upcoming) {       
-        if (row.kresNotified) {
-          continue;
-        }
-
-        const currentTime = moment().format('HH:mm');
-
-        if (currentTime < '11:00') {
-          continue;
-        }
-        
-        if (row.date == now) {
-          row.kresNotified = true;
-          await gameEventController.updateGameEvent(row);
-
-          this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);          
-        }
-      }
-    }, 1000 * 60 * 60);
-  }
-
   private getInlineKeyboardForGameEvent(gameEvent: GameEvent): TelegramBot.InlineKeyboardButton[][] {
     return [
       [
@@ -341,6 +369,19 @@ class TGBotService {
         { text: '🤙 Чіназес', callback_data: 'chinazes' }
       ]
     ];
+  }
+
+  private async updateMessageHistory(msg: TelegramBot.Message) {
+    const lastMessagaes = await this.msgStorage.list();
+    let msgArray = Object.values(lastMessagaes);
+
+    if (msgArray.length == 1000) {
+      msgArray = msgArray.slice(1);
+    }
+
+    msgArray.push({id: msg.message_id.toString(), message: msg.text || '', sender: msg.from});
+
+    await this.msgStorage.updateStorage(msgArray);
   }
 
 }

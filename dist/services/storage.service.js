@@ -120,6 +120,18 @@ class StorageService {
             return storage;
         });
     }
+    updateStorage(value) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                fs.writeFile(this.storagePath, JSON.stringify(value), (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    resolve(true);
+                });
+            });
+        });
+    }
 }
 exports.default = StorageService;
 //# sourceMappingURL=storage.service.js.map
