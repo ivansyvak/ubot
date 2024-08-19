@@ -82,11 +82,23 @@ export default class StorageService<T> {
     });
   }
 
-  public async list(): Promise<{[key: string]: T}> {
+  public async list(): Promise<{[key: string]: T} | T[]> {
     const data = await this.readStorageFile();
 
     const storage = JSON.parse(data);
 
     return storage;
+  }
+
+  public async updateStorage(value: {[key: string]: T} | Array<T>) {
+    return new Promise<boolean>((resolve, reject) => {
+      fs.writeFile(this.storagePath, JSON.stringify(value), (err) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve(true);
+      });
+    });
   }
 }

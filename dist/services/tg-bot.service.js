@@ -47,6 +47,7 @@ const mime = __importStar(require("mime-types"));
 const path = __importStar(require("path"));
 const fs_service_1 = __importDefault(require("./fs.service"));
 const form_data_1 = __importDefault(require("form-data"));
+const storage_service_1 = __importDefault(require("./storage.service"));
 const quizChannels = {
     '-1001344826818': { id: 'art42', name: '42' },
     '-1001717726506': { id: 'graj', name: 'ГРАЙ!' },
@@ -58,12 +59,36 @@ class TGBotService {
         if (TGBotService.hasInstance) {
             throw new Error('Cannot create multiple instances of TGBotService');
         }
+        this.msgStorage = new storage_service_1.default('chat-messages');
         TGBotService.hasInstance = true;
         this.bot = new node_telegram_bot_api_1.default(botToken, { polling: true });
         this.bot.onText(/\/menu/, this.onMenu.bind(this));
         this.bot.on('callback_query', this.onCallbackQuery.bind(this));
         this.bot.on('photo', this.onPhoto.bind(this));
         this.bot.on('message', this.onMessage.bind(this));
+    }
+    init() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // this.bot.sendMessage(mainChannel, 'Я обновілся і пєрєзапустілся! Слава Україні! 🇺🇦');    
+            setInterval(() => __awaiter(this, void 0, void 0, function* () {
+                const upcoming = yield game_event_controller_1.default.upcomingGameEvents();
+                const now = (0, moment_1.default)().format('YYYY-MM-DD');
+                for (let row of upcoming) {
+                    if (row.kresNotified) {
+                        continue;
+                    }
+                    const currentTime = (0, moment_1.default)().format('HH:mm');
+                    if (currentTime < '11:00') {
+                        continue;
+                    }
+                    if (row.date == now) {
+                        row.kresNotified = true;
+                        yield game_event_controller_1.default.updateGameEvent(row);
+                        this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);
+                    }
+                }
+            }), 1000 * 60 * 60);
+        });
     }
     onMenu(msg) {
         this.bot.sendMessage(msg.chat.id, 'Шо хочєш?', {
@@ -140,8 +165,14 @@ class TGBotService {
         });
     }
     onMessage(msg) {
-        console.log(msg.chat.id);
         try {
+            if (msg.text && msg.text.includes('@bookwa_bot ')) {
+                this.handleMention(msg);
+                return;
+            }
+            if (msg.chat.id.toString() == mainChannel) {
+                this.updateMessageHistory(msg);
+            }
             if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
                 this.handleQuizChannelMessage(msg);
                 return;
@@ -150,6 +181,20 @@ class TGBotService {
         catch (e) {
             log_service_1.default.error('Error in onMessage', e);
         }
+    }
+    handleMention(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const msgHistory = yield this.msgStorage.list();
+            const usrMessage = (_a = msg.text) === null || _a === void 0 ? void 0 : _a.replace('@bookwa_bot', '').trim();
+            if (usrMessage == '') {
+                return;
+            }
+            this.bot.sendMessage(msg.chat.id, 'Дайтє подумать', { reply_to_message_id: msg.message_id });
+            this.bot.sendSticker(msg.chat.id, 'CAACAgIAAxkBAAICMWbDwa-xucSAEW_dS77xqLqLDPc_AALEMgACS_2JSN0h_UUCCS2eNQQ');
+            const mentionResponse = yield openai_service_1.default.generateChatCompletion(msgHistory, usrMessage || '');
+            this.bot.sendMessage(msg.chat.id, mentionResponse, { reply_to_message_id: msg.message_id });
+        });
     }
     onPhoto(msg) {
         if (msg.caption && msg.caption.includes('/quiz')) {
@@ -268,29 +313,6 @@ class TGBotService {
     getFileExtension(mimeType) {
         return mime.extension(mimeType) || 'jpg';
     }
-    init() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.bot.sendMessage(mainChannel, 'Я обновілся і пєрєзапустілся! Слава Україні! 🇺🇦');
-            setInterval(() => __awaiter(this, void 0, void 0, function* () {
-                const upcoming = yield game_event_controller_1.default.upcomingGameEvents();
-                const now = (0, moment_1.default)().format('YYYY-MM-DD');
-                for (let row of upcoming) {
-                    if (row.kresNotified) {
-                        continue;
-                    }
-                    const currentTime = (0, moment_1.default)().format('HH:mm');
-                    if (currentTime < '11:00') {
-                        continue;
-                    }
-                    if (row.date == now) {
-                        row.kresNotified = true;
-                        yield game_event_controller_1.default.updateGameEvent(row);
-                        this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);
-                    }
-                }
-            }), 1000 * 60 * 60);
-        });
-    }
     getInlineKeyboardForGameEvent(gameEvent) {
         return [
             [
@@ -315,6 +337,17 @@ class TGBotService {
                 { text: '🤙 Чіназес', callback_data: 'chinazes' }
             ]
         ];
+    }
+    updateMessageHistory(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const lastMessagaes = yield this.msgStorage.list();
+            let msgArray = Object.values(lastMessagaes);
+            if (msgArray.length == 1000) {
+                msgArray = msgArray.slice(1);
+            }
+            msgArray.push({ id: msg.message_id.toString(), message: msg.text || '', sender: msg.from });
+            yield this.msgStorage.updateStorage(msgArray);
+        });
     }
 }
 TGBotService.hasInstance = false;

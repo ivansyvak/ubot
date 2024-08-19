@@ -1,3 +1,7 @@
 import tgBotService from './services/tg-bot.service';
 
-tgBotService.init();
+main();
+
+async function main() {
+  await tgBotService.init();
+}
