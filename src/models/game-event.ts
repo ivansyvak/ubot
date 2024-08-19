@@ -4,4 +4,5 @@ export interface GameEvent {
   date: string;
   time: string;
   topic: string;
+  kresNotified: boolean;
 }

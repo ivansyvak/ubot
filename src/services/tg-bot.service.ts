@@ -295,8 +295,21 @@ class TGBotService {
       const upcoming = await gameEventController.upcomingGameEvents();
       const now = moment().format('YYYY-MM-DD');      
 
-      for (let row of upcoming) {        
+      for (let row of upcoming) {       
+        if (row.kresNotified) {
+          continue;
+        }
+
+        const currentTime = moment().format('HH:mm');
+
+        if (currentTime < '11:00') {
+          continue;
+        }
+        
         if (row.date == now) {
+          row.kresNotified = true;
+          await gameEventController.updateGameEvent(row);
+
           this.bot.sendMessage(mainChannel, `Сьогодні ${row.organization} ${row.topic} о ${row.time}. Єслі сєводня тєматічєская дрочь то, пані @chrszz, будєтє дєлать лого?`);          
         }
       }
