@@ -188,7 +188,7 @@ class TGBotService {
   }
 
   private async handleMention(msg: TelegramBot.Message) {
-    const msgHistory = await this.msgStorage.list() as ChatMessage[];
+    const msgHistory = await this.msgStorage.list() as ChatMessage[] | [];
     const usrMessage = msg.text?.replace('@bookwa_bot', '').trim();
 
     if (usrMessage == '') {
