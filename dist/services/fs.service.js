@@ -22,51 +22,36 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 class FSService {
-    readFile(path) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                fs.readFile(path, 'utf-8', (err, data) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    resolve(data);
-                });
+    async readFile(path) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(path, 'utf-8', (err, data) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(data);
             });
         });
     }
-    writeFile(path, value) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                fs.writeFile(path, value, 'utf-8', (err) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    resolve();
-                });
+    async writeFile(path, value) {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(path, value, 'utf-8', (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve();
             });
         });
     }
-    removeFile(path) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                fs.unlink(path, (err) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    resolve();
-                });
+    async removeFile(path) {
+        return new Promise((resolve, reject) => {
+            fs.unlink(path, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve();
             });
         });
     }

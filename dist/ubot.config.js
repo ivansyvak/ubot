@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 class UBotConfig {
+    isProduction = false;
+    tgBotToken = '';
+    openaiToken = '';
+    ocrToken = '';
     constructor() {
-        this.isProduction = false;
-        this.tgBotToken = '';
-        this.openaiToken = '';
-        this.ocrToken = '';
         this.isProduction = process.env.NODE_ENV === 'production';
         if (this.isProduction) {
             this.openaiToken = (0, fs_1.readFileSync)('/opt/ubot/tokens/openai_token', 'utf-8');
