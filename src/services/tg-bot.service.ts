@@ -167,19 +167,19 @@ class TGBotService {
     }
   }
 
-  private onMessage(msg: TelegramBot.Message) {
+  private async onMessage(msg: TelegramBot.Message) {
     try {
       if (msg.text && msg.text.includes('@bookwa_bot ')) {
-        this.handleMention(msg);
+        await this.handleMention(msg);
         return;
       }
 
       if (msg.chat.id.toString() == mainChannel) {
-        this.updateMessageHistory(msg);
+        await this.updateMessageHistory(msg);
       }
 
       if (msg.forward_from_chat && quizChannels.hasOwnProperty(msg.forward_from_chat.id)) {
-        this.handleQuizChannelMessage(msg);
+        await this.handleQuizChannelMessage(msg);
         return;
       }
     } catch (e) {
